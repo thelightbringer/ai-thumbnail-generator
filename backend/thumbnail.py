@@ -100,7 +100,7 @@ class ThumbnailGenerator:
         draw.ellipse([x1 - 2*radius, y1 - 2*radius, x1, y1], fill=fill)
 
     def generate_thumbnail_template(self, image_url: str, metadata: dict) -> str:
-        image = self.download_image(image_url).resize((1920, 1080), Image.Resampling.LANCZOS)
+        image = self.download_image(image_url).resize((1280, 720), Image.Resampling.LANCZOS)
         overlay = Image.new('RGBA', image.size, (0, 0, 0, int(255 * self.overlay_opacity)))
         image = Image.alpha_composite(image.convert('RGBA'), overlay).convert('RGB')
         draw = ImageDraw.Draw(image)
