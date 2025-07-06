@@ -6,32 +6,25 @@ import os
 
 class ThumbnailGenerator:
     def __init__(self):
-        # Font sizes (will be scaled based on image width)
         self.heading_size = 140
         self.subheading_size = 80
-        self.label_size = 48
-        self.date_size = 48
-        self.line_spacing = 12
+        self.label_size = 50
+        self.date_size = 50
+        self.line_spacing = 20
 
-        # Colors
         self.heading_color = (255, 255, 255)
         self.subheading_color = (255, 255, 255)
         self.label_color = (255, 255, 255)
         self.date_color = (255, 255, 255)
 
-        # Background colors
         self.label_bg = (220, 38, 38)
-        self.date_bg = (0, 0, 0, 180)
+        self.date_bg = (0, 0, 0, 200)
 
-        # Stroke/shadow
         self.shadow_color = (0, 0, 0)
+        self.overlay_opacity = 0.45
 
-        # Overlay opacity
-        self.overlay_opacity = 0.4
-
-        # Logo
         self.logo_path = "../frontend/src/assets/Logo.png"
-        self.logo_size = (120, 120)
+        self.logo_size = (160, 160)
 
     def load_logo(self):
         try:
@@ -49,7 +42,7 @@ class ThumbnailGenerator:
             return Image.open(io.BytesIO(response.content)).convert('RGB')
         except Exception as e:
             print(f"Error downloading image: {e}")
-            return Image.new('RGB', (1280, 720), (50, 50, 50))
+            return Image.new('RGB', (1920, 1080), (50, 50, 50))
 
     def get_font(self, size, bold=False, italic=False):
         try:
@@ -65,25 +58,28 @@ class ThumbnailGenerator:
                 return ImageFont.load_default()
 
     def calculate_font_size(self, base_size, image_width):
-        return int(base_size * (image_width / 1280.0))
+        return int(base_size * (image_width / 1920.0))
 
     def wrap_text(self, text, font, max_width):
         words = text.split()
         lines, current = [], []
-
         for word in words:
             test_line = ' '.join(current + [word])
             test_width = ImageDraw.Draw(Image.new('RGB', (1, 1))).textbbox((0, 0), test_line, font=font)[2]
             if test_width <= max_width:
                 current.append(word)
             else:
-                lines.append(' '.join(current))
-                current = [word]
+                if current:
+                    lines.append(' '.join(current))
+                    current = [word]
+                else:
+                    lines.append(word)
+                    current = []
         if current:
             lines.append(' '.join(current))
         return lines or [text]
 
-    def draw_text_with_stroke(self, draw, xy, text, font, text_color, stroke_color, stroke_width=3):
+    def draw_text_with_stroke(self, draw, xy, text, font, text_color, stroke_color, stroke_width=4):
         x, y = xy
         for dx in range(-stroke_width, stroke_width + 1):
             for dy in range(-stroke_width, stroke_width + 1):
@@ -101,7 +97,7 @@ class ThumbnailGenerator:
         draw.ellipse([x1 - 2*radius, y1 - 2*radius, x1, y1], fill=fill)
 
     def generate_thumbnail_template(self, image_url: str, metadata: dict) -> str:
-        image = self.download_image(image_url).resize((1280, 720), Image.Resampling.LANCZOS)
+        image = self.download_image(image_url).resize((1920, 1080), Image.Resampling.LANCZOS)
         overlay = Image.new('RGBA', image.size, (0, 0, 0, int(255 * self.overlay_opacity)))
         image = Image.alpha_composite(image.convert('RGBA'), overlay).convert('RGB')
         draw = ImageDraw.Draw(image)
@@ -118,17 +114,16 @@ class ThumbnailGenerator:
         date_font = self.get_font(self.calculate_font_size(self.date_size, width), italic=True)
 
         margin = int(width * 0.05)
-        top_margin = int(height * 0.08)
+        top_margin = int(height * 0.07)
         bottom_margin = int(height * 0.05)
 
-        # Logo
         logo = self.load_logo()
         if logo:
             image.paste(logo, (margin, top_margin), logo)
 
         # Heading
         heading_lines = self.wrap_text(heading, heading_font, width * 0.8)
-        y = top_margin + (self.logo_size[1] if logo else 0) + 20
+        y = top_margin + (self.logo_size[1] if logo else 0) + 30
         for line in heading_lines:
             bbox = draw.textbbox((0, 0), line, font=heading_font)
             x = (width - bbox[2]) // 2
@@ -148,15 +143,17 @@ class ThumbnailGenerator:
         if label:
             bbox = draw.textbbox((0, 0), label, font=label_font)
             lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            padding = 12
-            self.draw_rounded_rectangle(draw, [margin, height - lh - padding*2 - bottom_margin, margin + lw + padding*2, height - bottom_margin], 12, self.label_bg)
-            self.draw_text_with_stroke(draw, (margin + padding, height - lh - padding - bottom_margin), label, label_font, self.label_color, self.shadow_color, stroke_width=2)
+            padding = 14
+            badge_w, badge_h = lw + padding*2, lh + padding*2
+            y_label = height - bottom_margin - badge_h
+            self.draw_rounded_rectangle(draw, [margin, y_label, margin + badge_w, y_label + badge_h], 14, self.label_bg)
+            self.draw_text_with_stroke(draw, (margin + padding, y_label + padding), label, label_font, self.label_color, self.shadow_color, stroke_width=2)
 
         # Date
         if date:
             bbox = draw.textbbox((0, 0), date, font=date_font)
             dw, dh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            padding = 8
+            padding = 10
             x = width - dw - padding*2 - margin
             y_date = height - dh - padding*2 - bottom_margin
             draw.rectangle([x, y_date, x + dw + padding*2, y_date + dh + padding*2], fill=self.date_bg)
