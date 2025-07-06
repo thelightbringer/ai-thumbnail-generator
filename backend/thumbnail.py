@@ -30,7 +30,7 @@ class ThumbnailGenerator:
         self.overlay_opacity = 0.3
 
         # Logo
-        self.logo_path = "../frontend/src/assets/Logo.png"
+        self.logo_path = os.path.join(os.path.dirname(__file__), "static", "Logo.png")
         self.logo_size = (180, 180)
 
     def load_logo(self):
