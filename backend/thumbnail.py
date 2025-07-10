@@ -102,7 +102,10 @@ class ThumbnailGenerator:
     def generate_thumbnail_template(self, image_url: str, metadata: dict) -> str:
         image = self.download_image(image_url).resize((1280, 720), Image.Resampling.LANCZOS)
         overlay = Image.new('RGBA', image.size, (0, 0, 0, int(255 * self.overlay_opacity)))
-        image = Image.alpha_composite(image.convert('RGBA'), overlay).convert('RGB')
+        # Keep image in RGBA mode so elements with transparency (e.g. date
+        # background) render correctly. Converting to RGB here would drop the
+        # alpha channel and make semi-transparent overlays fully opaque.
+        image = Image.alpha_composite(image.convert('RGBA'), overlay)
         draw = ImageDraw.Draw(image)
 
         heading = metadata.get("heading", "").upper()
