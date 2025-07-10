@@ -2,8 +2,17 @@ import { useState } from 'react'
 import axios from 'axios'
 import './App.css'
 
-// Set up axios base URL from env or fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nseprofitmaker.onrender.com';
+// Use VITE_API_URL if set, otherwise use relative URLs (for Vite proxy in dev)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+function apiUrl(path) {
+  // If API_BASE_URL is set, use it; otherwise, use relative path
+  if (API_BASE_URL) {
+    // Ensure no double slashes
+    return `${API_BASE_URL.replace(/\/$/, '')}${path}`;
+  }
+  return path;
+}
 
 function App() {
   const [videoIdea, setVideoIdea] = useState('')
@@ -46,7 +55,7 @@ function App() {
     setError('')
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/generate-thumbnails`, {
+      const response = await axios.post(apiUrl('/api/generate-thumbnails'), {
         video_idea: videoIdea
       })
 
@@ -77,7 +86,7 @@ function App() {
     setError('')
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/regenerate-images`, {
+      const response = await axios.post(apiUrl('/api/regenerate-images'), {
         video_idea: videoIdea,
         text_data: textData,
         selected_index: selectedIndex
@@ -103,7 +112,7 @@ function App() {
     setError('')
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/regenerate-all`, {
+      const response = await axios.post(apiUrl('/api/regenerate-all'), {
         video_idea: videoIdea
       })
 
@@ -129,7 +138,7 @@ function App() {
     setError('')
     try {
       // Use the original Unsplash URLs for text updates
-      const response = await axios.post(`${API_BASE_URL}/api/update-thumbnails`, {
+      const response = await axios.post(apiUrl('/api/update-thumbnails'), {
         image_urls: originalImageUrls, // Use original Unsplash URLs
         text_data: textData
       })
