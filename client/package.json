@@ -1,0 +1,16 @@
+{
+  "name": "gmail-cleaner-client",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.4.0",
+    "bootstrap": "^5.3.0"
+  },
+  "scripts": {
+    "start": "webpack serve --mode development --open",
+    "build": "webpack --mode production"
+  },
+  "proxy": "http://localhost:5000"
+}
